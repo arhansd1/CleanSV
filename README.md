@@ -1,34 +1,43 @@
-# 🧹 CleanSV
+# CleanSV
 
-**CleanSV** is an AI-powered web app designed to help you **clean messy CSV files easily** using natural language. Just upload your dataset, chat with the AI, and see **live updates** before confirming any changes.
+**CleanSV** is a simple, AI-powered web tool that helps you clean CSV files the way you want — using plain English.
 
----
-
-## ✨ Features
-
-- 📁 Upload any `.csv` file and visualize its contents instantly
-- 🧠 Use natural language commands (e.g., *"remove empty rows"*, *"fill missing values with average"*)
-- 💬 Interactive AI Agent interface for smart data cleaning
-- 🔁 Live preview of all proposed changes
-- ✅ Accept or ❌ Reject changes before they’re applied
-- 📊 Column-based tools: remove duplicates, normalize, calculate stats, etc.
-- 💡 Automatic suggestions for cleaning based on data quality checks
-- 🔒 All processing done locally or securely (based on setup)
+Upload your dataset, talk to the AI assistant to tell it what changes you’d like (like “drop rows with missing age” or “rename the email column”), and see the results live. You can choose to accept or reject each suggestion before it’s applied.
 
 ---
 
-## 🚀 Getting Started
+## Features
+
+- Upload CSV files and instantly see the data in your browser
+- Talk to an AI agent using natural language — no need to write code
+- Get real-time previews of changes before confirming
+- Accept or reject individual cleaning steps
+- Use built-in tools for tasks like removing duplicates, fixing formats, or filling missing values
+- Smart suggestions based on the structure and quality of your data
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js & npm
-- Python (for backend with pandas, FastAPI/Flask)
+- Node.js and npm
+- Python (recommended with pandas and FastAPI or Flask)
 - Git
 
-### Clone and Run
+### Setup
+
+To run the project locally:
 
 ```bash
+# clone the repo
 git clone https://github.com/yourusername/cleansv.git
 cd cleansv
+
+# frontend setup
 npm install
 npm start
+
+# backend setup
+# (details coming soon)
+

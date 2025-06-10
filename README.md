@@ -4,6 +4,10 @@
 
 Upload your dataset, talk to the AI assistant to tell it what changes you’d like (like “drop rows with missing age” or “rename the email column”), and see the results live. You can choose to accept or reject each suggestion before it’s applied.
 
+
+#PS : currently working on pretraining the AI model (deepseek R1) - With A Dataset Of Commands And Output(Code) through huggingface.
+
+
 ---
 
 ## Features

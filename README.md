@@ -1,4 +1,4 @@
-# CleanSV ( INCOMPLETE FOR NOW )
+# CleanSV ( unfinished )
 
 **CleanSV** is a simple, AI-powered web tool that helps you clean CSV files the way you want — using plain English.
 

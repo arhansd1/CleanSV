@@ -1,50 +1,74 @@
-// State management variables
-let currentData = []; // Holds the current CSV data as an array of objects
-let previousData = null; // Placeholder for undo functionality (to be implemented later)
-let nextData = null; // Placeholder for redo functionality (to be implemented later)
-
-// Toggle visibility of numbered columns
-function toggleNumberVisibility() {
-  const showNumbers = document.getElementById('show-numbers').checked;
-  const numberCells = document.querySelectorAll('.numbered');
-  numberCells.forEach(cell => {
-    cell.style.display = showNumbers ? '' : 'none';
-  });
-}
+let currentData = [];
+let previousData = null;
+let nextData = null;
 
 // File input handling
 document.getElementById('file-input').addEventListener('change', (event) => {
   const file = event.target.files[0];
   if (file) {
-    // Update UI with filename
     document.getElementById('file-name').textContent = `Selected: ${file.name}`;
-    
-    // Store reference for undo/redo functionality
+    document.getElementById('show-numbers').disabled = false; // Enable toggle
+    if(document.getElementById('show-numbers').checked){
+      document.getElementById('show-numbers').checked = false;
+    }
+    removeColumnNumbering();
     previousData = currentData.length > 0 ? [...currentData] : null;
-    
-    // Parse the file
     parseCSV(file);
   }
 });
 
-// Show numbers toggle
-document.getElementById('show-numbers').addEventListener('change', toggleNumberVisibility);
 
+//ColumnNumbering
+document.getElementById('show-numbers').addEventListener('change', () => {
+  if (document.getElementById('show-numbers').checked) {
+    addcolumnNumbering();
+  } else {
+    removeColumnNumbering(); // optional
+  }
+});
+
+
+//AddColumnNumbering
+function addcolumnNumbering() {
+  const table = document.querySelector('.csv-table');
+  if (!table) return;
+
+  const rows = table.querySelectorAll('tr');
+
+  rows.forEach((row, index) => {
+    const numberCell = document.createElement(row.parentElement.tagName === 'THEAD' || index === 0 ? 'th' : 'td');
+    numberCell.textContent = index === 0 ? '#' : index;
+    numberCell.className = 'numbered';
+    row.insertBefore(numberCell, row.firstChild);
+  });
+}
+
+// RemoveColumnNumbering
+function removeColumnNumbering() {
+  const table = document.querySelector('.csv-table');
+  if (!table) return;
+
+  const rows = table.querySelectorAll('tr');
+
+  rows.forEach(row => {
+    const firstCell = row.firstElementChild;
+    if (firstCell && firstCell.classList.contains('numbered')) {
+      row.removeChild(firstCell);
+    }
+  });
+}
+
+  
+  
 // CSV parsing function
 function parseCSV(file) {
   const reader = new FileReader();
-  
-  // File loaded successfully
   reader.onload = (e) => {
     const csvData = e.target.result;
-    
     Papa.parse(csvData, {
       header: true,
       complete: (results) => {
-        // Store parsed data
         currentData = results.data;
-        
-        // Render table
         renderTable(currentData);
       },
       error: (error) => {
@@ -53,14 +77,10 @@ function parseCSV(file) {
       }
     });
   };
-
-  // File read error
   reader.onerror = (error) => {
     console.error("Error reading file:", error);
     showError("File Read Error: Could not read file");
   };
-  
-  // Start reading file
   reader.readAsText(file);
 }
 
@@ -75,12 +95,8 @@ function saveCellEdit(td) {
 // Main table rendering function
 function renderTable(data) {
   const tableContainer = document.getElementById('table-container');
-  const showNumbers = document.getElementById('show-numbers').checked;
-  
-  // Clear previous content using document fragment for better performance
   const fragment = document.createDocumentFragment();
-  
-  // Handle empty data with optimized fragment
+
   if (data.length === 0) {
     const message = document.createElement('div');
     message.className = 'empty-table-message';
@@ -90,84 +106,69 @@ function renderTable(data) {
     tableContainer.appendChild(fragment);
     return;
   }
-  
-  // Create table structure
+
   const table = document.createElement('table');
   table.setAttribute('role', 'grid');
   table.className = 'csv-table';
-  
-  // Create table header
+
   const headerRow = document.createElement('tr');
-  
-  // Add number column header if enabled
-  if (showNumbers) {
-    const numberHeader = document.createElement('th');
-    numberHeader.textContent = '#';
-    numberHeader.className = 'numbered';
-    headerRow.appendChild(numberHeader);
-  }
-  
-  // Add data headers
+
   Object.keys(data[0]).forEach(key => {
     const th = document.createElement('th');
     th.textContent = key;
     headerRow.appendChild(th);
   });
-  
+
   table.appendChild(headerRow);
-  
-  // Create data rows using document fragment
+
   const rowsFragment = document.createDocumentFragment();
-  
+
   data.forEach((row, index) => {
     const tr = document.createElement('tr');
-    
-    // Add row number if enabled
-    if (showNumbers) {
-      const numberCell = document.createElement('td');
-      numberCell.textContent = index + 1;
-      numberCell.className = 'numbered';
-      tr.appendChild(numberCell);
-    }
-    
-    // Add data cells with debounced editing
+
     Object.entries(row).forEach(([key, value]) => {
       const td = document.createElement('td');
       td.textContent = value;
-      td.contentEditable = true;
+      
+
+      td.contentEditable = false;
+      td.addEventListener('dblclick', () => {
+        td.contentEditable = true;
+        td.focus();
+      });
+      td.addEventListener('blur', () => {
+        td.contentEditable = false;
+        saveCellEdit(td);
+      });
+      
+
+
       td.dataset.column = key;
       td.dataset.row = index;
-      
-      // Debounced input handling
+
       let editTimeout;
       td.addEventListener('input', () => {
         clearTimeout(editTimeout);
         editTimeout = setTimeout(() => {
           saveCellEdit(td);
-        }, 500); // 500ms delay before saving
+        }, 500);
       });
-      
-      // Immediate save on blur (when cell loses focus)
+
       td.addEventListener('blur', () => {
-        clearTimeout(editTimeout); // Cancel the pending debounce
+        clearTimeout(editTimeout);
         saveCellEdit(td);
       });
-      
+
       tr.appendChild(td);
     });
-    
+
     rowsFragment.appendChild(tr);
   });
-  
+
   table.appendChild(rowsFragment);
   fragment.appendChild(table);
-  
-  // Update DOM efficiently
   tableContainer.innerHTML = '';
   tableContainer.appendChild(fragment);
-  
-  // Set initial visibility of numbered columns
-  toggleNumberVisibility();
 }
 
 // Error display function
@@ -179,3 +180,4 @@ function showError(message) {
   chatMessages.appendChild(errorMsg);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+

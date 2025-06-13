@@ -28,6 +28,7 @@ Upload your dataset, talk to the AI assistant to tell it what changes you’d li
 - Node.js and npm
 - Python (recommended with pandas and FastAPI or Flask)
 - Git
+- Get a Pretrained model to run minstral7B on to get precise response 
 
 ### Setup
 

@@ -9,6 +9,9 @@ Upload your dataset, talk to the AI assistant to tell it what changes you’d li
 
 
 ---
+  ###Version 1
+- no multimessage context .
+
 
 ## Features
 
@@ -18,6 +21,7 @@ Upload your dataset, talk to the AI assistant to tell it what changes you’d li
 - Accept or reject individual cleaning steps
 - Use built-in tools for tasks like removing duplicates, fixing formats, or filling missing values
 - Smart suggestions based on the structure and quality of your data
+
 
 ---
 

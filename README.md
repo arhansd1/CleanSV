@@ -11,6 +11,8 @@ Upload your dataset, talk to the AI assistant to tell it what changes you’d li
 ---
 ### Version 1
 - no multimessage context .
+- fine-tuned for small(single/double) line commands , unprecise commands might give wrong code (should give error message / or ask for more context)
+- No green/red highlighton changes on live csv
 
 
 ## Features

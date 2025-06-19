@@ -7,7 +7,8 @@ Upload your dataset, talk to the AI assistant to tell it what changes you’d li
 
 #PS : currently working on pretraining the AI model (deepseek R1) - With A Dataset Of Commands And Output(Code) through huggingface.
 
-![Uploading Screenshot 2025-06-20 at 4.19.32 AM.png…]()
+
+![1](https://github.com/user-attachments/assets/59c718e6-ed52-4627-9310-89b864a176c3)
 
 ---
 ### Version 1

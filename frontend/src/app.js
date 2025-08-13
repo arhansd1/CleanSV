@@ -186,6 +186,8 @@ function handleSendMessage() {
   const input = document.getElementById('user-input');
   const text = input.value.trim();
   
+  input.style.height = "auto"; // reset height after send
+
   // Don't send empty messages
   if (!text) return;
   
@@ -194,7 +196,7 @@ function handleSendMessage() {
   input.value = '';
   document.getElementById('send-btn').disabled = true;
   
-  // Display user message
+  // Display user message with preserved newlines
   displayMessage(text, 'user-message');
 
   // Get context and instruction data
@@ -214,7 +216,8 @@ function displayMessage(text, className) {
   const chatMessages = document.getElementById('chat-messages');
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${className}`;
-  messageDiv.textContent = text;
+  // Replace newlines with <br> and preserve other HTML entities
+  messageDiv.innerHTML = text.replace(/\n/g, '<br>');
   chatMessages.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -278,6 +281,18 @@ document.getElementById('user-input').addEventListener('keydown', function(e) {
     handleSendMessage();
   }
 });
+
+
+// Auto-resize textarea up to 1/6 of chat-box height
+const userInput = document.getElementById("user-input");
+userInput.addEventListener("input", () => {
+  userInput.style.height = "auto";
+  const chatBoxHeight = document.querySelector(".chat-box").clientHeight;
+  const maxHeight = chatBoxHeight / 6;
+  userInput.style.height = Math.min(userInput.scrollHeight, maxHeight) + "px";
+});
+
+
 
 // Initial welcome message
 displayMessage('Welcome to CSV Cleaner! Select an AI provider and type commands to edit your CSV data.', 'system-message');

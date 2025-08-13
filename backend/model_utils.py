@@ -9,8 +9,8 @@ load_dotenv()
 # API Keys - Add your keys here
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Add your OpenAI key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Add your Google API key
-# ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")  # Add your Anthropic key
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Add your Groq key
+# ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")  # Add your Anthropic key
 
 SYSTEM_PROMPT = """You are a pandas code generator. Follow these rules strictly:
 
@@ -128,6 +128,42 @@ def call_gemini_api(context: str, instruction: str) -> str:
     except Exception as e:
         return f"# Gemini API error: {str(e)}"
 
+def call_groq_api(context: str, instruction: str) -> str:
+    """Call Groq API"""
+    if not GROQ_API_KEY:
+        return "# Groq API key not configured"
+    
+    try:
+        headers = {
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "model": "llama3-8b-8192",
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": f"Context:\n{context}\n\nInstruction: {instruction}"}
+            ],
+            "max_tokens": 200,
+            "temperature": 0.1
+        }
+        
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return response.json()["choices"][0]["message"]["content"].strip()
+        else:
+            return f"# Groq API error: {response.status_code}"
+            
+    except Exception as e:
+        return f"# Groq API error: {str(e)}"
+
 # def call_anthropic_api(context: str, instruction: str) -> str:
 #     """Call Anthropic Claude API"""
 #     if not ANTHROPIC_API_KEY:
@@ -166,42 +202,6 @@ def call_gemini_api(context: str, instruction: str) -> str:
 #     except Exception as e:
 #         return f"# Anthropic API error: {str(e)}"
 
-def call_groq_api(context: str, instruction: str) -> str:
-    """Call Groq API"""
-    if not GROQ_API_KEY:
-        return "# Groq API key not configured"
-    
-    try:
-        headers = {
-            "Authorization": f"Bearer {GROQ_API_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "model": "llama3-8b-8192",
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Context:\n{context}\n\nInstruction: {instruction}"}
-            ],
-            "max_tokens": 200,
-            "temperature": 0.1
-        }
-        
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            return response.json()["choices"][0]["message"]["content"].strip()
-        else:
-            return f"# Groq API error: {response.status_code}"
-            
-    except Exception as e:
-        return f"# Groq API error: {str(e)}"
-
 def generate_code(context: str, instruction: str, api_provider: str = "openai") -> str:
     """Generate pandas code using specified API provider"""
     
@@ -221,10 +221,10 @@ def generate_code(context: str, instruction: str, api_provider: str = "openai") 
         code = call_openai_api(context, instruction)
     elif api_provider.lower() == "gemini":
         code = call_gemini_api(context, instruction)
-    # elif api_provider.lower() == "anthropic":
-    #     code = call_anthropic_api(context, instruction)
     elif api_provider.lower() == "groq":
         code = call_groq_api(context, instruction)
+    # elif api_provider.lower() == "anthropic":
+    #     code = call_anthropic_api(context, instruction)
     else:
         return "# Unsupported API provider"
     

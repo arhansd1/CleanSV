@@ -305,6 +305,9 @@ body {
   padding: 0.75rem 1rem;
   border-radius: 8px;
   max-width: 80%;
+  white-space: pre-line; /* This will preserve line breaks */
+  word-wrap: break-word; /* Ensure long words wrap */
+  overflow-wrap: break-word; /* Alternative for better browser support */
 }
 
 .chat-messages {
@@ -355,7 +358,7 @@ body {
 
 #api-provider {
   width: 100%;
-  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
   border: none;
   background: transparent;
   color: #d4d4d4;
@@ -385,17 +388,17 @@ body {
 
 #user-input {
   flex: 1;
-  padding: 0.75rem 1rem;
+  padding: 0;
   border: none;
   background: transparent;
   color: #d4d4d4;
   font-size: 0.95rem;
   outline: none;
-  min-height: 24px;
-  max-height: 120px;
-  resize: none;
+  min-height: 18px;
   line-height: 1.5;
+  resize:none; /* no manual drag resizing */
   overflow-y: auto;
+  max-height: calc(100% / 6); /* stops at 1/6 height of chat box */
 }
 
 #user-input::placeholder {
@@ -441,6 +444,6 @@ body {
 #api-provider:focus,
 #user-input:focus,
 #send-btn:focus-visible {
-  outline: 2px solid #4a9eff;
-  outline-offset: 2px;
+  border: .05rem solid rgba(63, 63, 64, 0.4);
+  border-radius: .5rem;
 }

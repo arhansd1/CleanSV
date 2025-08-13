@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Cleaner</title>
+  <!-- Fixed path - removed ../ since styles.css is in src folder -->
+  <link rel="stylesheet" href="../src/styles.css">
+</head>
+<body>
+  <!-- Top Toolbar -->
+  <div class="toolbar" role="toolbar" aria-label="Main toolbar">
+    <h1 id="toolbar-heading">CLEAN CSV</h1>
+    <div class="toolbar-controls">
+      <label class="checkbox-label">
+        <input type="checkbox" id="show-numbers" aria-label="Show column numbers" disabled/>
+        <span>Column Numbering</span>
+      </label>
+      <button class="toolbar-btn" id="export-btn" aria-label="Export CSV file">Export CSV</button>
+      <button class="toolbar-btn" id="undo-btn" aria-label="Undo last action">Undo</button>
+      <button class="toolbar-btn" id="redo-btn" aria-label="Redo last action">Redo</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Left Panel - File/Table -->
+    <div class="left-panel">
+      <div id="file-upload-container">
+        <input type="file" id="file-input" accept=".csv" hidden>
+        <label for="file-input" class="upload-label" role="button" tabindex="0">
+          <span>📁 Upload CSV</span>
+        </label>
+        <p id="file-name" aria-live="polite">No file selected</p>
+      </div>
+      <div id="table-container" role="grid" aria-label="CSV data table">
+        <!-- Excel-like table will render here -->
+        <div class="empty-table-message" role="status">Upload a CSV to begin</div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Chat -->
+    <div class="right-panel">
+      <div class="chat-box">
+        <div class="chat-messages" id="chat-messages" role="log" aria-label="Chat messages">
+        </div>
+        <div class="chat-input-container">
+          <div class="chat-input">
+            <div class="provider-selector">
+              <select id="api-provider" aria-label="Select AI provider">
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Gemini</option>
+                <!-- <option value="anthropic">Anthropic</option> -->
+                <option value="groq">Groq</option>
+              </select>
+              <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="input-wrapper">
+              <input type="text" id="user-input" placeholder="Type a command..." aria-label="Command input">
+              <button id="send-btn" aria-label="Send command">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script type="module" src="../src/app.js"></script>
+</body>
+</html>

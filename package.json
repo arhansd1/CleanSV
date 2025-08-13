@@ -1,0 +1,17 @@
+
+{
+  "name": "clean-sv",
+  "version": "1.0.0",
+  "description": "CSV Cleaner Web Application",
+  "main": "frontend/public/index.html",
+  "scripts": {
+    "start": "npx http-server frontend/public -p 3000 -c-1",
+    "dev": "npx http-server frontend/public -p 3000 -c-1 -o",
+    "backend": "cd backend && python app.py",
+    "install-backend": "cd backend && pip install -r requirements.txt"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "license": "ISC"
+}

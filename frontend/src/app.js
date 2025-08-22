@@ -1,4 +1,5 @@
 import { getCurrentContextAndInstruction } from './contextBuilder.js';
+import { isExecutableCode, addApplyButton } from './applyButton.js';
 
 // State management variables
 let currentData = [];
@@ -220,6 +221,8 @@ function displayMessage(text, className) {
   messageDiv.innerHTML = text.replace(/\n/g, '<br>');
   chatMessages.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  
+  return messageDiv; // Return the element so we can add buttons to it
 }
 
 // Process system response
@@ -232,7 +235,7 @@ async function processSystemResponse(userText) {
   
   try {
     // Show loading message
-    displayMessage(`Processing with ${apiProvider.toUpperCase()}...`, 'system-message');
+    const loadingMessage = displayMessage(`Processing with ${apiProvider.toUpperCase()}...`, 'system-message');
     
     // Send request to backend
     const response = await fetch('http://localhost:5000/ai-command', {
@@ -245,6 +248,9 @@ async function processSystemResponse(userText) {
       })
     });
     
+    // Remove loading message
+    loadingMessage.remove();
+    
     // Handle HTTP errors
     if (!response.ok) {
       throw new Error(`Backend error: ${response.status}`);
@@ -254,8 +260,14 @@ async function processSystemResponse(userText) {
     const result = await response.json();
     
     if (result.status === 'success') {
-      // Display generated code with API info
-      displayMessage(`[${result.api_used?.toUpperCase()}] ${result.code}`, 'system-message');
+      // Display the code
+      const codeMessage = displayMessage(result.code, 'system-message');
+      
+      // Add apply button if this is executable code
+      if (isExecutableCode(result.code)) {
+        addApplyButton(result.code, codeMessage, apiProvider);
+      }
+      
     } else {
       // Display error from backend
       displayMessage(`Error: ${result.message}`, 'error-message');
@@ -272,6 +284,15 @@ async function processSystemResponse(userText) {
   }
 }
 
+// Handle revert events
+window.addEventListener('revertToCode', (event) => {
+  const code = event.detail.code;
+  // Here you would implement the actual revert logic
+  console.log('Reverting to code:', code);
+  // For now, we'll just show an alert
+  alert('Revert functionality will be implemented in Phase 2');
+});
+
 // Event listeners
 document.getElementById('send-btn').addEventListener('click', handleSendMessage);
 
@@ -282,7 +303,6 @@ document.getElementById('user-input').addEventListener('keydown', function(e) {
   }
 });
 
-
 // Auto-resize textarea up to 1/6 of chat-box height
 const userInput = document.getElementById("user-input");
 userInput.addEventListener("input", () => {
@@ -291,8 +311,6 @@ userInput.addEventListener("input", () => {
   const maxHeight = chatBoxHeight / 6;
   userInput.style.height = Math.min(userInput.scrollHeight, maxHeight) + "px";
 });
-
-
 
 // Initial welcome message
 displayMessage('Welcome to CSV Cleaner! Select an AI provider and type commands to edit your CSV data.', 'system-message');

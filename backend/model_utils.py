@@ -100,10 +100,16 @@ def call_openai_api(context: str, instruction: str) -> str:
 def call_gemini_api(context: str, instruction: str) -> str:
     """Call Google Gemini API"""
     if not GEMINI_API_KEY:
+        print("Gemini API key not found in environment variables")
         return "# Gemini API key not configured"
     
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
+        # Use the latest stable endpoint with flash model for better availability
+        base_url = "https://generativelanguage.googleapis.com/v1beta"
+        model_name = "gemini-1.5-flash"  # Using flash model which has better availability
+        
+        last_error = None
+        url = f"{base_url}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
         
         payload = {
             "contents": [{
@@ -117,16 +123,43 @@ def call_gemini_api(context: str, instruction: str) -> str:
             }
         }
         
+        print(f"\n--- Gemini API Request ---")
+        print(f"URL: {url}")
+        print(f"Payload: {json.dumps(payload, indent=2)[:500]}...")  # Print first 500 chars of payload
+        
         response = requests.post(url, json=payload, timeout=10)
         
+        print(f"\n--- Gemini API Response ---")
+        print(f"Status Code: {response.status_code}")
+        print(f"Headers: {dict(response.headers)}")
+        print(f"Response: {response.text[:1000]}...")  # Print first 1000 chars of response
+        
         if response.status_code == 200:
-            result = response.json()
-            return result["candidates"][0]["content"]["parts"][0]["text"].strip()
+            try:
+                result = response.json()
+                if "candidates" in result and result["candidates"]:
+                    return result["candidates"][0]["content"]["parts"][0]["text"].strip()
+                else:
+                    print("Unexpected response format - no candidates found")
+                    print(f"Full response: {json.dumps(result, indent=2)}")
+            except (KeyError, IndexError, json.JSONDecodeError) as e:
+                print(f"Error parsing response: {str(e)}")
+                last_error = f"# Gemini API response format error: {str(e)}"
         else:
-            return f"# Gemini API error: {response.status_code}"
+            last_error = f"# Gemini API error: {response.status_code} - {response.text}"
+            print(f"Request failed with status {response.status_code}")
             
+        # If we get here, the request failed
+        return last_error or "# Gemini API error: Unknown error"
+            
+    except requests.exceptions.RequestException as e:
+        error_msg = f"# Gemini API request failed: {str(e)}"
+        print(error_msg)
+        return error_msg
     except Exception as e:
-        return f"# Gemini API error: {str(e)}"
+        error_msg = f"# Gemini API error: {str(e)}"
+        print(error_msg)
+        return error_msg
 
 def call_groq_api(context: str, instruction: str) -> str:
     """Call Groq API"""

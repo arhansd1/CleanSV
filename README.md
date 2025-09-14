@@ -48,9 +48,12 @@ git clone https://github.com/yourusername/cleansv.git
 cd cleansv
 
 # frontend setup
+# OPEN TERMINAL IN MAIN FILE 
 npm install
-npm start
+npm run dev
 
 # backend setup
+# OPEN TERMINAL IN MAIN FILE
+npm run backend
 # (details coming soon)
 

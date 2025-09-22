@@ -1,3 +1,4 @@
+//frontend/public/src/app.js
 import { getCurrentContextAndInstruction } from './contextBuilder.js';
 import { isExecutableCode, addApplyButton } from './applyButton.js';
 

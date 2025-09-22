@@ -1,4 +1,4 @@
-// applyButton.js - New file to create
+//frontend/public/src/applyButton.js
 
 /**
  * Detects if the response is executable pandas code

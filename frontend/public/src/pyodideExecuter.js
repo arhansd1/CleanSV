@@ -1,4 +1,4 @@
-// pyodideExecutor.js - New file to create
+//frontend/public/src/pyodideExecuter.js
 
 let pyodide = null;
 let isInitializing = false;

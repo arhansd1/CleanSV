@@ -1,4 +1,4 @@
-// contextBuilder.js
+// frontend/public/src/contextBuilder.js
 
 // Function to extract CSV context (headers + first 3 rows)
 export function getCSVContext(csvData) {

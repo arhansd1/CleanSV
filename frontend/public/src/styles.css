@@ -77,15 +77,23 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.toolbar-btn:hover {
+.toolbar-btn:hover:not(:disabled) {
   background: rgba(60, 60, 60, 0.9);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.toolbar-btn:active {
+.toolbar-btn:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toolbar-btn:disabled {
+  background: rgba(35, 35, 35, 0.5);
+  color: #6b6b6b;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Main Container */
@@ -207,18 +215,18 @@ body {
 
 .csv-table th,
 .csv-table td {
-  padding: .5rem 1rem; /* 4px 8px */
+  padding: .5rem 1rem;
   text-align: left;
   border: 1px solid #333;
   min-width: 100px;
   user-select: none;
   outline: none;
 }
+
 .csv-table td:focus {
   outline: 2px solid rgba(74,158,255,0.8);
   background-color: rgba(74,158,255,0.1);
 }
-
 
 .csv-table th {
   background: #2d2d2d;
@@ -305,9 +313,9 @@ body {
   padding: 0.75rem 1rem;
   border-radius: 8px;
   max-width: 80%;
-  white-space: pre-line; /* This will preserve line breaks */
-  word-wrap: break-word; /* Ensure long words wrap */
-  overflow-wrap: break-word; /* Alternative for better browser support */
+  white-space: pre-line;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .chat-messages {
@@ -330,6 +338,16 @@ body {
   align-self: flex-start;
   background: #2d2d2d;
   color: #d4d4d4;
+  padding: 8px 12px;
+  border-radius: 8px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.error-message {
+  align-self: flex-start;
+  background: #3d2020;
+  color: #ff6b6b;
   padding: 8px 12px;
   border-radius: 8px;
   max-width: 70%;
@@ -396,9 +414,9 @@ body {
   outline: none;
   min-height: 18px;
   line-height: 1.5;
-  resize:none; /* no manual drag resizing */
+  resize: none;
   overflow-y: auto;
-  max-height: calc(100% / 6); /* stops at 1/6 height of chat box */
+  max-height: calc(100% / 6);
 }
 
 #user-input::placeholder {
@@ -446,4 +464,75 @@ body {
 #send-btn:focus-visible {
   border: .05rem solid rgba(63, 63, 64, 0.4);
   border-radius: .5rem;
+}
+
+/* Toast Notification Styles */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: #2d2d2d;
+  color: #d4d4d4;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-left: 4px solid #4a9eff;
+  min-width: 250px;
+  max-width: 400px;
+  opacity: 0;
+  transform: translateX(100px);
+  transition: all 0.3s ease;
+  pointer-events: auto;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-icon {
+  font-size: 18px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 14px;
+  word-wrap: break-word;
+}
+
+.toast-success {
+  border-left-color: #4caf50;
+}
+
+.toast-success .toast-icon {
+  color: #4caf50;
+}
+
+.toast-error {
+  border-left-color: #f44336;
+}
+
+.toast-error .toast-icon {
+  color: #f44336;
+}
+
+.toast-info {
+  border-left-color: #4a9eff;
+}
+
+.toast-info .toast-icon {
+  color: #4a9eff;
 }

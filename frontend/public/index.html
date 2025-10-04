@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CSV Cleaner</title>
-  <!-- Fixed path - removed ../ since styles.css is in src folder -->
   <link rel="stylesheet" href="src/styles.css">
   <link rel="stylesheet" href="src/applyButton.css">
 </head>
@@ -18,8 +17,8 @@
         <span>Column Numbering</span>
       </label>
       <button class="toolbar-btn" id="export-btn" aria-label="Export CSV file">Export CSV</button>
-      <button class="toolbar-btn" id="undo-btn" aria-label="Undo last action">Undo</button>
-      <button class="toolbar-btn" id="redo-btn" aria-label="Redo last action">Redo</button>
+      <button class="toolbar-btn" id="undo-btn" aria-label="Undo last action" disabled>Undo</button>
+      <button class="toolbar-btn" id="redo-btn" aria-label="Redo last action" disabled>Redo</button>
     </div>
   </div>
 
@@ -35,7 +34,6 @@
         <p id="file-name" aria-live="polite">No file selected</p>
       </div>
       <div id="table-container" role="grid" aria-label="CSV data table">
-        <!-- Excel-like table will render here -->
         <div class="empty-table-message" role="status">Upload a CSV to begin</div>
       </div>
     </div>
@@ -51,8 +49,8 @@
               <select id="api-provider" aria-label="Select AI provider">
                 <option value="openai">OpenAI</option>
                 <option value="gemini">Gemini</option>
-                <!-- <option value="anthropic">Anthropic</option> -->
                 <option value="groq">Groq</option>
+                <!-- <option value="anthropic">Anthropic</option> -->
               </select>
               <span class="dropdown-arrow">▼</span>
             </div>
@@ -70,7 +68,13 @@
     </div>
   </div>
 
+  <!-- Toast Container -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- Add Pyodide CDN -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
   <script type="module" src="src/app.js"></script>
 </body>
 </html>

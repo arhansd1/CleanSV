@@ -1,4 +1,5 @@
 //frontend/public/src/applyButton.js
+import { executePandasCode, initializePyodide } from './pyodideExecuter.js';
 
 /**
  * Detects if the response is executable pandas code
@@ -31,6 +32,7 @@ function isExecutableCode(code) {
  * Creates and adds apply button to a message
  * @param {string} code - The pandas code to execute
  * @param {HTMLElement} messageElement - The message div to add button to
+ * @param {string} provider - API provider name
  */
 function addApplyButton(code, messageElement, provider = 'Gemini') {
     // Check if button already exists (prevent duplicates)
@@ -78,14 +80,18 @@ function addApplyButton(code, messageElement, provider = 'Gemini') {
 async function handleApplyClick(button) {
     const code = button.dataset.code;
     
+    // Get access to app functions and data
+    const { getCurrentData, updateData, renderTable, showToast } = window.csvCleanerApp;
+    const currentData = getCurrentData();
+    
     // Disable button during execution
     button.disabled = true;
+    button.classList.add('loading');
     button.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2v4l-1.5-1.5M12 2v4l1.5-1.5M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-            <animateTransform attributeName="transform" attributeType="XML" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+            <path d="M12 2 A10 10 0 0 1 22 12" stroke="currentColor" stroke-width="2" fill="none"/>
         </svg>
-        Applying...
     `;
     
     try {
@@ -93,57 +99,68 @@ async function handleApplyClick(button) {
         if (!currentData || currentData.length === 0) {
             throw new Error('No data to apply changes to. Please upload a CSV file first.');
         }
-        // Execute the code (we'll implement this in Phase 2)
-        await executeCode(code);
-        // Show success state
-        button.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-            Applied ✓
-        `;
-        button.className = 'apply-button applied';
-        // Display success message
-        displayMessage('Changes applied successfully!', 'system-message success-message');
+
+        // Initialize Pyodide if not already done (lazy loading)
+        showToast('Initializing Python environment...', 'info');
+        const initSuccess = await initializePyodide();
+        if (!initSuccess) {
+            throw new Error('Failed to initialize Python environment');
+        }
+
+        // Execute the code using Pyodide
+        showToast('Executing code...', 'info');
+        const result = await executePandasCode(code, currentData);
+        
+        if (result.success) {
+            // Update data state: saves to history automatically
+            updateData(result.result);
+            
+            // Re-render table
+            renderTable(result.result);
+            
+            // Show success state
+            button.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+            `;
+            button.classList.remove('loading');
+            button.classList.add('applied');
+            
+            // Show success toast
+            showToast('Changes applied successfully!', 'success');
+            
+        } else {
+            throw new Error(result.error || 'Unknown error occurred');
+        }
+        
     } catch (error) {
         console.error('Error applying code:', error);
+        
         // Show error state
         button.innerHTML = `
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-2h-2v2zm0-4h2V7h-2v6z"/>
             </svg>
-            Error
         `;
-        button.className = 'apply-button error';
-        // Display error message
-        displayMessage(`Error applying changes: ${error.message}`, 'error-message');
+        button.classList.remove('loading');
+        button.classList.add('error');
+        
+        // Show error toast
+        showToast(`Failed to apply: ${error.message}`, 'error');
+        
         // Re-enable button after 3 seconds
         setTimeout(() => {
             button.disabled = false;
             button.innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 6L9 17l-5-5"/>
                 </svg>
-                Retry Apply
+                <span>Retry</span>
             `;
-            button.className = 'apply-button';
+            button.classList.remove('error');
         }, 3000);
     }
-}
-
-/**
- * Placeholder for code execution - will be implemented with Pyodide in Phase 2
- * @param {string} code - The pandas code to execute
- */
-async function executeCode(code) {
-    // This is a placeholder - we'll implement Pyodide execution here
-    console.log('Code to execute:', code);
-    
-    // For now, simulate execution delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Throw error for demonstration
-    throw new Error('Code execution not yet implemented. Please wait for Phase 2!');
 }
 
 // Export functions for use in main app.js

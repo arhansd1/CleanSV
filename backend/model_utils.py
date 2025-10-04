@@ -74,7 +74,7 @@ def call_openai_api(context: str, instruction: str) -> str:
         }
         
         payload = {
-            "model": "gpt-3.5-turbo",
+            "model": "gpt-3.5",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"Context:\n{context}\n\nInstruction: {instruction}"}
@@ -174,7 +174,7 @@ def call_groq_api(context: str, instruction: str) -> str:
         }
         
         payload = {
-            "model": "llama3-8b-8192",
+            "model": "openai/gpt-oss-20b",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"Context:\n{context}\n\nInstruction: {instruction}"}

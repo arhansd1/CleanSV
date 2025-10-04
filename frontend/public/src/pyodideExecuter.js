@@ -70,7 +70,7 @@ function convertDataToPython(data) {
             // Handle different data types
             if (value === null || value === undefined || value === '') {
                 cleanRow[key] = null;
-            } else if (!isNaN(value) && !isNaN(parseFloat(value))) {
+            } else if (!isNaN(value) && !isNaN(parseFloat(value)) && value.toString().trim() !== '') {
                 cleanRow[key] = parseFloat(value);
             } else {
                 cleanRow[key] = String(value);
@@ -127,12 +127,33 @@ if 'df' not in locals():
     raise Exception("Code must maintain 'df' variable")
         `);
         
-        // Get the result
+        // Get the result - CRITICAL FIX: Replace NaN/Infinity with null before JSON conversion
         const resultDf = pyodide.runPython(`
-# Convert result back to JSON
+# Convert result back to JSON with proper NaN/Inf handling
 import json
-result = df.to_dict('records')
-json.dumps(result)
+import math
+
+# Replace NaN and Infinity with None (null in JSON)
+df_clean = df.replace([float('nan'), float('inf'), float('-inf')], None)
+
+# Convert to records
+result = df_clean.to_dict('records')
+
+# Additional safety: manually clean any remaining NaN/Inf values
+def clean_value(val):
+    if val is None:
+        return None
+    if isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return None
+    return val
+
+result_cleaned = [
+    {k: clean_value(v) for k, v in record.items()}
+    for record in result
+]
+
+json.dumps(result_cleaned)
         `);
         
         const result = JSON.parse(resultDf);

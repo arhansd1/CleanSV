@@ -2,16 +2,98 @@
 import { getCurrentContextAndInstruction } from './contextBuilder.js';
 import { isExecutableCode, addApplyButton } from './applyButton.js';
 
-// State management variables
+// ============= STATE MANAGEMENT =============
 let currentData = [];
-let previousData = null;
-let nextData = null;
+let historyStack = []; // [state1, state2, state3, current]
+let historyIndex = -1; // Points to current position in history
+const MAX_HISTORY = 50; // Limit history to prevent memory issues
 
-// File input handling
+// ============= HISTORY FUNCTIONS =============
+function saveToHistory(data) {
+  // Remove any future states if we're not at the end
+  if (historyIndex < historyStack.length - 1) {
+    historyStack = historyStack.slice(0, historyIndex + 1);
+  }
+  
+  // Add new state
+  historyStack.push(JSON.parse(JSON.stringify(data))); // Deep copy
+  
+  // Limit history size
+  if (historyStack.length > MAX_HISTORY) {
+    historyStack.shift();
+  } else {
+    historyIndex++;
+  }
+  
+  updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+  const undoBtn = document.getElementById('undo-btn');
+  const redoBtn = document.getElementById('redo-btn');
+  
+  undoBtn.disabled = historyIndex <= 0;
+  redoBtn.disabled = historyIndex >= historyStack.length - 1;
+}
+
+function undo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    currentData = JSON.parse(JSON.stringify(historyStack[historyIndex]));
+    renderTable(currentData);
+    updateUndoRedoButtons();
+    showToast('Undo successful', 'success');
+  }
+}
+
+function redo() {
+  if (historyIndex < historyStack.length - 1) {
+    historyIndex++;
+    currentData = JSON.parse(JSON.stringify(historyStack[historyIndex]));
+    renderTable(currentData);
+    updateUndoRedoButtons();
+    showToast('Redo successful', 'success');
+  }
+}
+
+// ============= TOAST NOTIFICATION SYSTEM =============
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  
+  // Add icon based on type
+  const icon = type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ';
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${message}</span>`;
+  
+  container.appendChild(toast);
+  
+  // Trigger animation
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  // Remove after 3 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ============= EXPOSE API FOR APPLY BUTTON =============
+window.csvCleanerApp = {
+  getCurrentData: () => currentData,
+  getPreviousData: () => historyIndex > 0 ? historyStack[historyIndex - 1] : null,
+  updateData: (newData) => {
+    currentData = newData;
+    saveToHistory(currentData);
+  },
+  renderTable: renderTable,
+  showToast: showToast
+};
+
+// ============= FILE INPUT HANDLING =============
 document.getElementById('file-input').addEventListener('change', (event) => {
   const file = event.target.files[0];
   if (file) {
-    // Clear chat when new file selected
     clearChat();
     document.getElementById('file-name').textContent = `Selected: ${file.name}`;
     document.getElementById('show-numbers').disabled = false;
@@ -19,12 +101,11 @@ document.getElementById('file-input').addEventListener('change', (event) => {
       document.getElementById('show-numbers').checked = false;
       removeColumnNumbering();
     }
-    previousData = currentData.length > 0 ? [...currentData] : null;
     parseCSV(file);
   }
 });
 
-// Column numbering toggle
+// ============= COLUMN NUMBERING =============
 document.getElementById('show-numbers').addEventListener('change', () => {
   if (document.getElementById('show-numbers').checked) {
     addColumnNumbering();
@@ -58,6 +139,7 @@ function removeColumnNumbering() {
   });
 }
 
+// ============= CSV PARSING =============
 function parseCSV(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -66,7 +148,12 @@ function parseCSV(file) {
       header: true,
       complete: (results) => {
         currentData = results.data;
+        // Initialize history with first state
+        historyStack = [JSON.parse(JSON.stringify(currentData))];
+        historyIndex = 0;
+        updateUndoRedoButtons();
         renderTable(currentData);
+        showToast('CSV loaded successfully', 'success');
       },
       error: (error) => {
         console.error("Error parsing CSV:", error);
@@ -81,13 +168,22 @@ function parseCSV(file) {
   reader.readAsText(file);
 }
 
+// ============= CELL EDITING =============
 function saveCellEdit(td) {
   const newValue = td.textContent;
   const column = td.dataset.column;
   const rowIndex = parseInt(td.dataset.row);
-  currentData[rowIndex][column] = newValue;
+  
+  // Only save to history if value actually changed
+  const oldValue = currentData[rowIndex][column];
+  if (oldValue !== newValue) {
+    currentData[rowIndex][column] = newValue;
+    saveToHistory(currentData);
+    showToast('Cell updated', 'success');
+  }
 }
 
+// ============= TABLE RENDERING =============
 function renderTable(data) {
   const tableContainer = document.getElementById('table-container');
   const fragment = document.createDocumentFragment();
@@ -176,125 +272,91 @@ function showError(message) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Chat logic with proper DOM-safe appending
-// Chat state management
+// ============= CHAT LOGIC =============
 let isProcessing = false;
 
-// Unified message handler for both click and Enter key
 function handleSendMessage() {
-  // Prevent multiple submissions while processing
   if (isProcessing) return;
   
   const input = document.getElementById('user-input');
   const text = input.value.trim();
   
-  input.style.height = "auto"; // reset height after send
+  input.style.height = "auto";
 
-  // Don't send empty messages
   if (!text) return;
   
-  // Set processing state and clear input
   isProcessing = true;
   input.value = '';
   document.getElementById('send-btn').disabled = true;
   
-  // Display user message with preserved newlines
   displayMessage(text, 'user-message');
 
-  // Get context and instruction data
   const { context, instruction, fullPrompt } = getCurrentContextAndInstruction(text, currentData);
   
-  // For now, just log the data - you'll use this for API calls later
   console.log("Context:", context);
   console.log("Instruction:", instruction);
   console.log("Full Prompt:", fullPrompt);
   
-  // Process and display system response
   processSystemResponse(text);
 }
 
-// Display message in chat
 function displayMessage(text, className) {
   const chatMessages = document.getElementById('chat-messages');
   const messageDiv = document.createElement('div');
   messageDiv.className = `message ${className}`;
-  // Replace newlines with <br> and preserve other HTML entities
   messageDiv.innerHTML = text.replace(/\n/g, '<br>');
   chatMessages.appendChild(messageDiv);
   chatMessages.scrollTop = chatMessages.scrollHeight;
   
-  return messageDiv; // Return the element so we can add buttons to it
+  return messageDiv;
 }
 
-// Process system response
 async function processSystemResponse(userText) {
-  // Get the current context data
   const { context, instruction, fullPrompt } = getCurrentContextAndInstruction(userText, currentData);
-  
-  // Get selected API provider
   const apiProvider = document.getElementById('api-provider').value;
   
   try {
-    // Show loading message
     const loadingMessage = displayMessage(`Processing with ${apiProvider.toUpperCase()}...`, 'system-message');
     
-    // Send request to backend
     const response = await fetch('http://localhost:5000/ai-command', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         context, 
         instruction,
-        api_provider: apiProvider  // Send selected API provider
+        api_provider: apiProvider
       })
     });
     
-    // Remove loading message
     loadingMessage.remove();
     
-    // Handle HTTP errors
     if (!response.ok) {
       throw new Error(`Backend error: ${response.status}`);
     }
     
-    // Parse JSON response
     const result = await response.json();
     
     if (result.status === 'success') {
-      // Display the code
       const codeMessage = displayMessage(result.code, 'system-message');
       
-      // Add apply button if this is executable code
       if (isExecutableCode(result.code)) {
         addApplyButton(result.code, codeMessage, apiProvider);
       }
       
     } else {
-      // Display error from backend
       displayMessage(`Error: ${result.message}`, 'error-message');
     }
     
   } catch (error) {
-    // Display network/processing errors
     console.error('API Error:', error);
     displayMessage(`Network Error: ${error.message}`, 'error-message');
   } finally {
-    // Reset processing state
     isProcessing = false;
     document.getElementById('send-btn').disabled = false;
   }
 }
 
-// Handle revert events
-window.addEventListener('revertToCode', (event) => {
-  const code = event.detail.code;
-  // Here you would implement the actual revert logic
-  console.log('Reverting to code:', code);
-  // For now, we'll just show an alert
-  alert('Revert functionality will be implemented in Phase 2');
-});
-
-// Event listeners
+// ============= EVENT LISTENERS =============
 document.getElementById('send-btn').addEventListener('click', handleSendMessage);
 
 document.getElementById('user-input').addEventListener('keydown', function(e) {
@@ -304,7 +366,29 @@ document.getElementById('user-input').addEventListener('keydown', function(e) {
   }
 });
 
-// Auto-resize textarea up to 1/6 of chat-box height
+// Undo/Redo buttons
+document.getElementById('undo-btn').addEventListener('click', undo);
+document.getElementById('redo-btn').addEventListener('click', redo);
+
+// Export CSV button
+document.getElementById('export-btn').addEventListener('click', () => {
+  if (currentData.length === 0) {
+    showToast('No data to export', 'error');
+    return;
+  }
+  
+  const csv = Papa.unparse(currentData);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'cleaned_data.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported successfully', 'success');
+});
+
+// Auto-resize textarea
 const userInput = document.getElementById("user-input");
 userInput.addEventListener("input", () => {
   userInput.style.height = "auto";
@@ -319,6 +403,5 @@ displayMessage('Welcome to CSV Cleaner! Select an AI provider and type commands 
 function clearChat() {
   const chatMessages = document.getElementById('chat-messages');
   chatMessages.innerHTML = '';
-  // Re-add welcome message
   displayMessage('Welcome to CSV Cleaner! Select an AI provider and type commands to edit your CSV data.', 'system-message');
 }

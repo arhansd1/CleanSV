@@ -24,6 +24,8 @@ document.getElementById('toolbar-heading').addEventListener('click', toggleTheme
 
 // ============= STATE MANAGEMENT =============
 let currentData = [];
+let currentFileExtension = 'csv'; // Track the current file type
+let currentFileName = '';
 let historyStack = []; // [state1, state2, state3, current]
 let historyIndex = -1; // Points to current position in history
 const MAX_HISTORY = 50; // Limit history to prevent memory issues
@@ -113,15 +115,27 @@ window.csvCleanerApp = {
 // ============= FILE INPUT HANDLING =============
 document.getElementById('file-input').addEventListener('change', (event) => {
   const file = event.target.files[0];
-  if (file) {
-    clearChat();
-    document.getElementById('file-name').textContent = `Selected: ${file.name}`;
-    document.getElementById('show-numbers').disabled = false;
-    if (document.getElementById('show-numbers').checked) {
-      document.getElementById('show-numbers').checked = false;
-      removeColumnNumbering();
-    }
+  if (!file) return;
+  
+  clearChat();
+  document.getElementById('file-name').textContent = `Selected: ${file.name}`;
+  document.getElementById('show-numbers').disabled = false;
+  if (document.getElementById('show-numbers').checked) {
+    document.getElementById('show-numbers').checked = false;
+    removeColumnNumbering();
+  }
+  
+  const fileNameParts = file.name.split('.');
+  const fileExt = fileNameParts.pop().toLowerCase();
+  currentFileExtension = fileExt; // Store the file extension for export
+  currentFileName = fileNameParts.join('.'); // Get the filename without extension
+  
+  if (fileExt === 'csv') {
     parseCSV(file);
+  } else if (['xlsx', 'xls'].includes(fileExt)) {
+    parseExcel(file);
+  } else {
+    showError('Unsupported file type. Please upload a CSV or Excel file.');
   }
 });
 
@@ -159,7 +173,7 @@ function removeColumnNumbering() {
   });
 }
 
-// ============= CSV PARSING =============
+// ============= FILE PARSING =============
 function parseCSV(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -167,13 +181,7 @@ function parseCSV(file) {
     Papa.parse(csvData, {
       header: true,
       complete: (results) => {
-        currentData = results.data;
-        // Initialize history with first state
-        historyStack = [JSON.parse(JSON.stringify(currentData))];
-        historyIndex = 0;
-        updateUndoRedoButtons();
-        renderTable(currentData);
-        showToast('CSV loaded successfully', 'success');
+        processParsedData(results.data, 'CSV');
       },
       error: (error) => {
         console.error("Error parsing CSV:", error);
@@ -188,7 +196,67 @@ function parseCSV(file) {
   reader.readAsText(file);
 }
 
+function parseExcel(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      // Get the first worksheet
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      // Convert to array of objects (assuming first row is header)
+      const headers = jsonData[0];
+      const rows = jsonData.slice(1);
+      const result = rows.map(row => {
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] !== undefined ? row[index] : '';
+        });
+        return obj;
+      });
+      
+      processParsedData(result, 'Excel');
+    } catch (error) {
+      console.error("Error parsing Excel:", error);
+      showError(`Excel Parsing Error: ${error.message}`);
+    }
+  };
+  reader.onerror = (error) => {
+    console.error("Error reading file:", error);
+    showError("File Read Error: Could not read file");
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function processParsedData(data, fileType) {
+  currentData = data;
+  // Initialize history with first state
+  historyStack = [JSON.parse(JSON.stringify(currentData))];
+  historyIndex = 0;
+  updateUndoRedoButtons();
+  renderTable(currentData);
+  showToast(`${fileType} file loaded successfully`, 'success');
+}
+
 // ============= CELL EDITING =============
+let saveTimeout = null;
+
+function debounceSaveCellEdit(td) {
+  // Clear any existing timeout
+  if (saveTimeout) clearTimeout(saveTimeout);
+  
+  // Set a new timeout
+  saveTimeout = setTimeout(() => {
+    saveCellEdit(td);
+  }, 2000); // 2 second delay
+}
+
 function saveCellEdit(td) {
   const newValue = td.textContent;
   const column = td.dataset.column;
@@ -246,6 +314,8 @@ function renderTable(data) {
 
       td.addEventListener('blur', () => {
         if (td.isContentEditable) {
+          // Clear any pending saves and save immediately on blur
+          if (saveTimeout) clearTimeout(saveTimeout);
           saveCellEdit(td);
         }
         td.contentEditable = false;
@@ -255,7 +325,7 @@ function renderTable(data) {
       td.addEventListener('input', () => {
         clearTimeout(editTimeout);
         editTimeout = setTimeout(() => {
-          saveCellEdit(td);
+          debounceSaveCellEdit(td);
         }, 500);
       });
 
@@ -390,22 +460,41 @@ document.getElementById('user-input').addEventListener('keydown', function(e) {
 document.getElementById('undo-btn').addEventListener('click', undo);
 document.getElementById('redo-btn').addEventListener('click', redo);
 
-// Export CSV button
+// Export button
 document.getElementById('export-btn').addEventListener('click', () => {
   if (currentData.length === 0) {
     showToast('No data to export', 'error');
     return;
   }
   
-  const csv = Papa.unparse(currentData);
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'cleaned_data.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('CSV exported successfully', 'success');
+  if (currentFileExtension === 'csv') {
+    // Export as CSV
+    const csv = Papa.unparse(currentData);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentFileName}_cleaned.${currentFileExtension}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('File exported successfully', 'success');
+  } else if (['xlsx', 'xls'].includes(currentFileExtension)) {
+    try {
+      // Convert data to worksheet
+      const ws = XLSX.utils.json_to_sheet(currentData);
+      
+      // Create workbook and add the worksheet
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      
+      // Generate Excel file and trigger download
+      XLSX.writeFile(wb, `${currentFileName}_cleaned.${currentFileExtension}`);
+      showToast('File exported successfully', 'success');
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      showToast('Error exporting Excel file', 'error');
+    }
+  }
 });
 
 // Auto-resize textarea

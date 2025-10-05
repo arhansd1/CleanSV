@@ -28,9 +28,9 @@
     <!-- Left Panel - File/Table -->
     <div class="left-panel">
       <div id="file-upload-container">
-        <input type="file" id="file-input" accept=".csv" hidden>
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden>
         <label for="file-input" class="upload-label" role="button" tabindex="0">
-          <span>📁 Upload CSV</span>
+          <span>📁 Upload File (CSV/Excel)</span>
         </label>
         <p id="file-name" aria-live="polite">No file selected</p>
       </div>
@@ -75,6 +75,8 @@
 
   <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- Add SheetJS for Excel support -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Add Pyodide CDN -->
   <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
   <script type="module" src="src/app.js"></script>

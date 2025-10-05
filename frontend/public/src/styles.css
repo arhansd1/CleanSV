@@ -27,6 +27,7 @@
   
   --warning: #f59e0b;
   --shadow: rgba(0, 0, 0, 0.3);
+  --toast-bg: rgba(36, 36, 36, 0.9); /* Based on --bg-tertiary with transparency */
 }
 
 /* Light Theme */
@@ -39,6 +40,7 @@
   --text-primary: #1f1f1f;
   --text-secondary: #525252;
   --text-muted: #a3a3a3;
+  --toast-bg: rgba(229, 229, 229, 0.9); /* Light theme toast background */
   
   --border-primary: #d4d4d4;
   --border-secondary: #e5e5e5;
@@ -601,7 +603,7 @@ body {
 #toast-container {
   position: fixed;
   top: 20px;
-  right: 20px;
+  left: 20px;
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -614,7 +616,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  background: var(--bg-tertiary);
+  background: var(--toast-bg);
   color: var(--text-primary);
   border-radius: 8px;
   box-shadow: 0 4px 12px var(--shadow);

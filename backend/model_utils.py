@@ -11,6 +11,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Add your OpenAI key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Add your Google API key
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Add your Groq key
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Add your DeepSeek API key
 # ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")  # Add your Anthropic key
 
 SYSTEM_PROMPT = """You are a pandas code generator. Follow these rules strictly:
@@ -62,6 +63,7 @@ def validate_code(code: str) -> bool:
         
     return True
 
+# OPEN AI
 def call_openai_api(context: str, instruction: str) -> str:
     """Call OpenAI API"""
     if not OPENAI_API_KEY:
@@ -98,6 +100,7 @@ def call_openai_api(context: str, instruction: str) -> str:
     except Exception as e:
         return f"# OpenAI API error: {str(e)}"
 
+# GEMINI
 def call_gemini_api(context: str, instruction: str) -> str:
     """Call Google Gemini API"""
     if not GEMINI_API_KEY:
@@ -107,7 +110,7 @@ def call_gemini_api(context: str, instruction: str) -> str:
     try:
         # Use the latest stable endpoint with flash model for better availability
         base_url = "https://generativelanguage.googleapis.com/v1beta"
-        model_name = "gemini-1.5-flash"  # Using flash model which has better availability
+        model_name = "gemini-2.5-flash-lite"  # Using flash model which has better availability
         
         last_error = None
         url = f"{base_url}/models/{model_name}:generateContent?key={GEMINI_API_KEY}"
@@ -162,6 +165,7 @@ def call_gemini_api(context: str, instruction: str) -> str:
         print(error_msg)
         return error_msg
 
+#GROQ
 def call_groq_api(context: str, instruction: str) -> str:
     """Call Groq API"""
     if not GROQ_API_KEY:
@@ -198,6 +202,8 @@ def call_groq_api(context: str, instruction: str) -> str:
     except Exception as e:
         return f"# Groq API error: {str(e)}"
 
+
+# ANTHROPIC
 # def call_anthropic_api(context: str, instruction: str) -> str:
 #     """Call Anthropic Claude API"""
 #     if not ANTHROPIC_API_KEY:
@@ -236,6 +242,43 @@ def call_groq_api(context: str, instruction: str) -> str:
 #     except Exception as e:
 #         return f"# Anthropic API error: {str(e)}"
 
+
+# DEEPSEEK
+# def call_deepseek_api(context: str, instruction: str) -> str:
+#     """Call DeepSeek model via OpenRouter API"""
+#     if not DEEPSEEK_API_KEY:
+#         return "# DeepSeek API key not configured"
+#     try:
+#         headers = {
+#             "Authorization": f"Bearer {DEEPSEEK_API_KEY}",  # actually OpenRouter key
+#             "HTTP-Referer": "http://localhost",  # required by OpenRouter
+#             "X-Title": "MyApp",                  # required by OpenRouter
+#             "Content-Type": "application/json"
+#         }
+#         payload = {
+#             "model": "deepseek/deepseek-r1:free",  # OpenRouter model name
+#             "messages": [
+#                 {"role": "system", "content": SYSTEM_PROMPT},
+#                 {"role": "user", "content": f"Context:\n{context}\n\nInstruction: {instruction}"}
+#             ],
+#             "temperature": 0.1,
+#             "max_tokens": 200
+#         }
+#         response = requests.post(
+#             "https://openrouter.ai/api/v1/chat/completions",  # OpenRouter endpoint
+#             headers=headers,
+#             json=payload,
+#             timeout=20
+#         )
+#         if response.status_code == 200:
+#             data = response.json()
+#             return data["choices"][0]["message"]["content"].strip()
+#         else:
+#             return f"# DeepSeek API error: {response.status_code} - {response.text}"
+#     except Exception as e:
+#         return f"# DeepSeek API error: {str(e)}"
+
+
 def generate_code(context: str, instruction: str, api_provider: str = "openai") -> str:
     """Generate pandas code using specified API provider"""
     
@@ -257,12 +300,14 @@ def generate_code(context: str, instruction: str, api_provider: str = "openai") 
         code = call_gemini_api(context, instruction)
     elif api_provider.lower() == "groq":
         code = call_groq_api(context, instruction)
+    # elif api_provider.lower() == "deepseek":
+    #     code = call_deepseek_api(context, instruction)
     # elif api_provider.lower() == "anthropic":
     #     code = call_anthropic_api(context, instruction)
     else:
-        return "# Unsupported API provider"
+        return f"# Unsupported API provider: {api_provider}"
     
-    # Clean up response
+    # Clean up the code
     code = re.sub(r"```python\n?", "", code)
     code = re.sub(r"\n```", "", code)
     code = code.strip()
@@ -272,5 +317,5 @@ def generate_code(context: str, instruction: str, api_provider: str = "openai") 
     # Validate code
     if not validate_code(code):
         return f"# Code failed safety validation:\n# {code}"
-    
+     
     return code

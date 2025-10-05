@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CSV Cleaner</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="src/styles.css">
   <link rel="stylesheet" href="src/applyButton.css">
 </head>
@@ -16,9 +17,9 @@
         <input type="checkbox" id="show-numbers" aria-label="Show column numbers" disabled/>
         <span>Column Numbering</span>
       </label>
-      <button class="toolbar-btn" id="export-btn" aria-label="Export CSV file">Export CSV</button>
-      <button class="toolbar-btn" id="undo-btn" aria-label="Undo last action" disabled>Undo</button>
-      <button class="toolbar-btn" id="redo-btn" aria-label="Redo last action" disabled>Redo</button>
+      <button class="toolbar-btn" id="export-btn" aria-label="Export CSV file">DOWNLOAD FILE</button>
+      <button class="toolbar-btn" id="undo-btn" title="Undo" aria-label="Undo last action" disabled><i class="fas fa-undo"></i></button>
+      <button class="toolbar-btn" id="redo-btn" title="Redo" aria-label="Redo last action" disabled><i class="fas fa-redo"></i></button>
     </div>
   </div>
 
@@ -50,6 +51,7 @@
                 <option value="openai">OpenAI</option>
                 <option value="gemini">Gemini</option>
                 <option value="groq">Groq</option>
+                <!-- <option value="deepseek">DeepSeek</option> -->
                 <!-- <option value="anthropic">Anthropic</option> -->
               </select>
               <span class="dropdown-arrow">▼</span>

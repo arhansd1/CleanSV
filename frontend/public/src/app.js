@@ -2,6 +2,26 @@
 import { getCurrentContextAndInstruction } from './contextBuilder.js';
 import { isExecutableCode, addApplyButton } from './applyButton.js';
 
+// ============= THEME MANAGEMENT =============
+function initializeTheme() {
+  const savedTheme = localStorage.getItem('csvCleanerTheme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', newTheme);
+  localStorage.setItem('csvCleanerTheme', newTheme);
+  showToast(`Switched to ${newTheme} mode`, 'info');
+}
+
+// Initialize theme on page load
+initializeTheme();
+
+// Add click handler to title for theme toggle
+document.getElementById('toolbar-heading').addEventListener('click', toggleTheme);
+
 // ============= STATE MANAGEMENT =============
 let currentData = [];
 let historyStack = []; // [state1, state2, state3, current]

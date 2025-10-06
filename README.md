@@ -36,7 +36,7 @@
 ## VISION for Version 2
 - VS code like red/green highlights on changes when checking preview
 - Proper login page
-- Munual edit black with basic minimum features to complete small tasks
+- Manual edit block with basic minimum features to complete small tasks
 - Smart suggestions based on the structure and quality of your data.
 - Another chat block for general chat/ questions about the data.
 - chat history / memory
